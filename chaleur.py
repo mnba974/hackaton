@@ -24,16 +24,33 @@ T=np.array(T)
 MatT=np.array([T])
 
 K=np.zeros((Nx*Ny,Nx*Ny))
-for i in range(1,Nx-1):
-    for j in range(1,Ny-1):
-        K[i*Ny +j,(i+1)*Ny+j] = 1/delx**2
-        K[i*Ny +j, i*Ny +j]=-2*(1/delx**2 + 1/dely**2)
-        K[i*Ny +j,(i-1)*Ny+j]=1/delx**2
-        K[i*Ny +j,i*Ny +j-1]=1/dely**2
-with open('t.txt','w') as f:
-    for l in K:
-        f.write(str(l) +'\n')
-f.close()
+for pos in range(Nx*Ny):
+
+    i = pos//Nx
+    j = pos%Nx
+
+    if i<Ny-1:
+        K[i*Nx+j,(i+1)*Nx+j]+=1/delx**2
+
+    K[i*Nx+j,i*Nx+j]+=-2/delx**2
+
+    if i>0:
+        K[i*Nx+j,(i-1)*Nx+j]+=1/delx**2
+
+    if j<Nx-1:
+        K[i*Nx+j,i*Nx+j+1]+=1/dely**2
+
+    K[i*Nx+j,i*Nx+j]+=-2/dely**2
+
+    if j>0:
+        K[i*Nx+j,i*Nx+j-1]+=1/dely**2
+
+for r in range(Nx):
+    for j in range(Nx*Ny):
+        K[r,j],K[Nx*Ny-1-r,j]=0,0
+        K[j,r],K[j,Nx*Ny-1-r]=0,0
+
+
 def fexpli(t,vec):
     return vec+delt*np.dot(K,vec)
 
@@ -52,10 +69,17 @@ def aux_euler_predict(x0,f,t0,dt):
         return x+f(t0+i*dt,x)*dt
     return aux
 
-def solve_euler_explicit(f, x0, dt, t0, tf):
+def solve_euler_explicit2(f, x0, dt, t0, tf):
     """renvoie le vecteur des temps et le vecteur des solutions approchees de l equa dif"""
     Ttime = np.arange(t0,tf,dt,dtype=np.float64)
     return Ttime,(list(map(aux_euler_solve({0:x0},f,t0,dt),range(len(Ttime)))))
+
+def solve_euler_explicit(f, x0, dt, t0, tf):
+    Ttime = np.arange(t0,tf,dt,dtype=np.float64)
+    S=[x0]
+    for t in Ttime:
+        S.append(S[-1]+dt*f(t,S[-1]))
+    return Ttime,S
 
 #suppose que grad_solve(A,Y) renvoie une solution X a l equation AX=Y
 def aux_euler_implicit_solve(acc,grad_solve,I,K,t0,dt):
@@ -73,7 +97,7 @@ def solve_euler_implicit(grad_solve, K, x0, dt, t0, tf):
 def norme_carre(x):
     return (np.dot(np.transpose(x),x))
 
-def grad_solve(A,b,x_0,eps=1):
+def grad_solve(A,b,x_0,eps=0.1):
     r_0 = b - np.dot(A,x_0)
     p_0 = r_0
     x=np.copy(x_0)    
@@ -92,9 +116,8 @@ def grad_solve(A,b,x_0,eps=1):
         norme_r_0 = norme_carre(r_0)
     return(x)    
 
-#ti,mat=solve_euler_explicit(fexpli,T,delt,0,0.5)
+ti,mat=solve_euler_explicit(fexpli,T,10*delt,0,1000*delt)
+dill.dump(mat, open('solution', 'wb'))
 
-#dill.dump(mat, open('solution', 'wb'))
-
-ti,mat= solve_euler_implicit(grad_solve,-K,T,delt,0,delt)
-dill.dump(mat, open('solution2', 'wb'))
+#ti,mat= solve_euler_implicit(grad_solve,-K,T,delt,0,100*delt)
+#dill.dump(mat, open('solution2', 'wb'))
