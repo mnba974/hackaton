@@ -1,9 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import dill
 
 delx=0.01
 dely=0.01
-delt=0.01
+delt=0.0005
 Nx,Ny=int(1/delx),int(1/dely)
 
 X=np.linspace(0,1,int(1/delx ))
@@ -49,11 +50,12 @@ def aux_euler_predict(x0,f,t0,dt):
 def solve_euler_explicit(f, x0, dt, t0, tf):
     """renvoie le vecteur des temps et le vecteur des solutions approchees de l equa dif"""
     Ttime = np.arange(t0,tf,dt,dtype=np.float64)
-    return Ttime,np.array(list(map(aux_euler_solve({0:x0},f,t0,dt),range(len(Ttime)))))
+    return Ttime,(list(map(aux_euler_solve({0:x0},f,t0,dt),range(len(Ttime)))))
 
 
-ti,mat=solve_euler_explicit(fexpli,T,delt,0,0.5)
+ti,mat=solve_euler_explicit(fexpli,T,delt,0,0.1)
 
-plt.imshow(mat[3].reshape(Nx,Ny))
+plt.imshow(mat[180].reshape(Nx,Ny))
+dill.dump(mat, open('solution', 'wb'))
 
 plt.show()
