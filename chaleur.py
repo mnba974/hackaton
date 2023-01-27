@@ -8,6 +8,7 @@ dely=0.01
 delt=0.001
 Nx,Ny=int(1/delx),int(1/dely)
 
+
 X=np.linspace(0,1,int(1/delx ))
 Y=np.linspace(0,1,int(1/dely ))
 
@@ -25,13 +26,16 @@ MatT=np.array([T])
 K=np.zeros((Nx*Ny,Nx*Ny))
 for i in range(1,Nx-1):
     for j in range(1,Ny-1):
-            K[i*Ny +j,(i+1)*Ny+j] = 1/delx**2
-            K[i*Ny +j, i*Ny +j]=-2*(1/delx**2 + 1/dely**2)
-            K[i*Ny +j,(i-1)*Ny+j]=1/delx**2
-            K[i*Ny +j,i*Ny +j-1]=1/dely**2
-
+        K[i*Ny +j,(i+1)*Ny+j] = 1/delx**2
+        K[i*Ny +j, i*Ny +j]=-2*(1/delx**2 + 1/dely**2)
+        K[i*Ny +j,(i-1)*Ny+j]=1/delx**2
+        K[i*Ny +j,i*Ny +j-1]=1/dely**2
+with open('t.txt','w') as f:
+    for l in K:
+        f.write(str(l) +'\n')
+f.close()
 def fexpli(t,vec):
-    return vec-delt*np.dot(K,vec)
+    return vec+delt*np.dot(K,vec)
 
 def aux_euler_solve(acc,f,t0,dt):
     def aux(i):
@@ -69,13 +73,13 @@ def solve_euler_implicit(grad_solve, K, x0, dt, t0, tf):
 def norme_carre(x):
     return (np.dot(np.transpose(x),x))
 
-def grad_solve(A,b,x_0,eps=0.1):
+def grad_solve(A,b,x_0,eps=1):
     r_0 = b - np.dot(A,x_0)
     p_0 = r_0
     x=np.copy(x_0)    
     k=0
     norme_r_0=norme_carre(r_0)
-    while(norme_r_0 > eps ):
+    while(norme_r_0 > eps ) and k<100:
         alpha = norme_r_0/np.transpose(p_0).dot(A).dot(p_0)
         x_1 = x + alpha * p_0
         r_1 = r_0 - alpha * A.dot(p_0)
@@ -92,5 +96,5 @@ def grad_solve(A,b,x_0,eps=0.1):
 
 #dill.dump(mat, open('solution', 'wb'))
 
-ti,mat= solve_euler_implicit(grad_solve,K,T,delt,0,0.01)
+ti,mat= solve_euler_implicit(grad_solve,-K,T,delt,0,delt)
 dill.dump(mat, open('solution2', 'wb'))
