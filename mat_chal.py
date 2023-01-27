@@ -16,7 +16,6 @@ while m<len(A) and running:
     r=A[m].reshape(100,100)
     for i in range(len(A)):
         for j in range(len(A[i])):
-            color=(int((10*A[i][j] % 255)),0,0)
             rect = pg.Rect(i*5, j*5, 5, 5)
             pg.draw.rect(screen, color, rect)
     m+=1
